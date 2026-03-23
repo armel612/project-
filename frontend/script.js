@@ -1,209 +1,271 @@
 // === API Configuration ===
 const API_URL = '../Ticket_inventory-system/index.php';
-
-// === Data Storage ===
-let tickets = [];
-let inventory = [];
+let currentUser = null;
 
 // === Initialization ===
-async function init() {
-  await fetchAll();
-  render();
-}
-
-async function fetchAll() {
-  try {
-    const [ticketsRes, invRes] = await Promise.all([
-      fetch(`${API_URL}/tickets`).then(r => r.json()),
-      fetch(`${API_URL}/inventory`).then(r => r.json())
-    ]);
-    if (ticketsRes.success) tickets = ticketsRes.tickets;
-    if (invRes.success) inventory = invRes.inventory;
-  } catch (err) {
-    console.error('Error fetching data:', err);
+function init() {
+  const user = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  
+  if (user && token) {
+    currentUser = JSON.parse(user);
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('appSection').style.display = 'block';
+    document.getElementById('userNameDisplay').textContent = `👤 ${currentUser.name} (${currentUser.role})`;
+    setupNavigation();
+  } else {
+    document.getElementById('loginSection').style.display = 'flex';
+    document.getElementById('appSection').style.display = 'none';
   }
 }
 
-// === Navigation ===
-function show(id) {
+async function fetchAuth(url, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  
+  const res = await fetch(`${API_URL}${url}`, { ...options, headers });
+  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  return res.json();
+}
+
+// === Authentication ===
+async function login() {
+  const name = document.getElementById('loginName').value;
+  const email = document.getElementById('loginEmail').value;
+  const errorEl = document.getElementById('loginError');
+  
+  if (!name || !email) return errorEl.textContent = 'Name and Email are required';
+  errorEl.textContent = 'Logging in...';
+
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email })
+    });
+    const result = await res.json();
+    
+    if (result.success) {
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
+      errorEl.textContent = '';
+      init();
+    } else {
+      errorEl.textContent = result.message || 'Login failed';
+    }
+  } catch (err) {
+    errorEl.textContent = 'Network error during login';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  currentUser = null;
+  init();
+}
+
+// === Navigation & Roles ===
+function setupNavigation() {
+  const nav = document.getElementById('mainNav');
+  nav.innerHTML = ''; // clear
+
+  if (currentUser.role === 'employee') {
+    nav.innerHTML = `<button class="active" onclick="showView('employeeView')">👨‍💼 My Portal</button>`;
+    showView('employeeView');
+    loadEmployeeDash();
+  } else if (currentUser.role === 'support_agent') {
+    nav.innerHTML = `<button class="active" onclick="showView('supportView')">🛠️ Support Desk</button>`;
+    showView('supportView');
+    loadSupportDash();
+  } else if (currentUser.role === 'inventory_manager') {
+    nav.innerHTML = `<button class="active" onclick="showView('managerView')">📦 Inventory HQ</button>`;
+    showView('managerView');
+    loadManagerDash();
+  }
+}
+
+function showView(viewId) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  const navBtn = Array.from(document.querySelectorAll('nav button')).find(b => b.textContent.toLowerCase().includes(id));
-  if (navBtn) navBtn.classList.add('active');
-  render();
+  document.getElementById(viewId).classList.add('active');
 }
 
-// === Render All ===
-function render() {
-  // Dashboard Stats
-  document.getElementById('dashOpen').textContent = tickets.filter(t => t.status === 'Open').length;
-  document.getElementById('dashItems').textContent = inventory.length;
-  document.getElementById('dashLow').textContent = inventory.filter(i => parseInt(i.stock) <= parseInt(i.threshold)).length;
-  document.getElementById('dashResolved').textContent = tickets.filter(t => t.status === 'Resolved').length;
+// ==============================
+// EMPLOYEE LOGIC
+// ==============================
+async function loadEmployeeDash() {
+  try {
+    const [ticketsRes, itemsRes, requestsRes] = await Promise.all([
+      fetchAuth('/tickets'),
+      fetchAuth('/inventory'),
+      fetchAuth('/requests')
+    ]);
 
-  // Tickets Table
-  document.getElementById('ticketTable').innerHTML = tickets.map(t => `
-    <tr>
-      <td>#${t.id.toString().padStart(4, '0')}</td>
-      <td>${t.title}</td>
-      <td>${t.priority}</td>
-      <td><span class="badge badge-${t.status.toLowerCase()}">${t.status}</span></td>
-      <td>
-        ${t.status !== 'Resolved' ? `<button class="action-btn" style="background:#70AD47" onclick="resolve(${t.id})">✓</button>` : ''}
-        <button class="action-btn btn-danger" onclick="delTicket(${t.id})">✕</button>
-      </td>
-    </tr>
-  `).join('');
+    // Populate Item Dropdown
+    if (itemsRes.success) {
+      const select = document.getElementById('empItemSelect');
+      select.innerHTML = itemsRes.inventory.map(i => `<option value="${i.id}">${i.name} (Stock: ${i.stock})</option>`).join('');
+    }
 
-  // Inventory Table
-  document.getElementById('invTable').innerHTML = inventory.map(i => {
-    const stock = parseInt(i.stock);
-    const threshold = parseInt(i.threshold);
-    const status = stock === 0 ? 'Out' : stock <= threshold ? 'Low' : 'OK';
-    const badge = stock === 0 ? 'badge-low' : stock <= threshold ? 'badge-low' : 'badge-resolved';
-    return `
-      <tr>
-        <td>${i.name}</td>
-        <td>${stock}</td>
-        <td>${threshold}</td>
-        <td><span class="badge ${badge}">${status}</span></td>
-        <td>
-          <button class="action-btn" style="background:#4472C4" onclick="updateStock(${i.id}, 1, ${stock})">+</button>
-          <button class="action-btn" style="background:#EF4444" onclick="updateStock(${i.id}, -1, ${stock})">-</button>
-          <button class="action-btn btn-danger" onclick="delItem(${i.id})">✕</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+    // Populate Tickets
+    if (ticketsRes.success) {
+      document.getElementById('empTicketsTable').innerHTML = ticketsRes.tickets.map(t => `
+        <tr>
+          <td>#${t.id}</td>
+          <td>${t.title}</td>
+          <td>${t.priority}</td>
+          <td><span class="badge badge-${t.status.toLowerCase()}">${t.status}</span></td>
+          <td>${t.tech_name || 'Unassigned'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Populate Requests
+    if (requestsRes.success) {
+      document.getElementById('empRequestsTable').innerHTML = requestsRes.requests.map(r => `
+        <tr>
+          <td>#${r.id}</td>
+          <td>${r.item_name}</td>
+          <td>${r.quantity}</td>
+          <td><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) { console.error(err); }
 }
 
-// === Ticket Actions ===
-async function addTicket() {
-  const title = document.getElementById('tTitle').value;
-  if (!title) return alert('Enter title');
+async function submitTicket() {
+  const title = document.getElementById('empTicketTitle').value;
+  const desc = document.getElementById('empTicketDesc').value;
+  const pri = document.getElementById('empTicketPriority').value;
+  if (!title) return alert('Title is required');
+
+  const res = await fetchAuth('/tickets', {
+    method: 'POST',
+    body: JSON.stringify({ title, description: desc, priority: pri })
+  });
+  if (res.success) {
+    document.getElementById('empTicketTitle').value = '';
+    document.getElementById('empTicketDesc').value = '';
+    loadEmployeeDash();
+  } else alert(res.message);
+}
+
+async function requestItem() {
+  const item_id = document.getElementById('empItemSelect').value;
+  const qty = document.getElementById('empItemQty').value;
   
-  const data = {
-    title: title,
-    priority: document.getElementById('tPriority').value
-  };
+  const res = await fetchAuth('/requests', {
+    method: 'POST',
+    body: JSON.stringify({ item_id, quantity: qty })
+  });
+  if (res.success) {
+    document.getElementById('empItemQty').value = '1';
+    loadEmployeeDash();
+  } else alert(res.message);
+}
 
+// ==============================
+// SUPPORT AGENT LOGIC
+// ==============================
+async function loadSupportDash() {
   try {
-    const res = await fetch(`${API_URL}/tickets`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    const result = await res.json();
-    if (result.success) {
-      document.getElementById('tTitle').value = '';
-      await fetchAll();
-      render();
-    } else {
-      alert('Error: ' + result.message);
+    const res = await fetchAuth('/tickets');
+    if (res.success) {
+      document.getElementById('supportTicketsTable').innerHTML = res.tickets.map(t => `
+        <tr>
+          <td>#${t.id}</td>
+          <td>${t.requester_name}</td>
+          <td>${t.title}</td>
+          <td>${t.priority}</td>
+          <td><span class="badge badge-${t.status.toLowerCase()}">${t.status}</span></td>
+          <td>${t.tech_name || 'Unassigned'}</td>
+          <td>
+            ${t.status === 'Open' ? `<button class="action-btn btn-success" onclick="actOnTicket(${t.id}, 'resolve')">Resolve</button>
+            <button class="action-btn btn-danger" onclick="actOnTicket(${t.id}, 'refuse')">Refuse</button>
+            <button class="action-btn btn-primary" onclick="assignTech(${t.id})">Take It</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
     }
-  } catch (err) {
-    console.error('Save failed:', err);
-  }
+  } catch (err) { console.error(err); }
 }
 
-async function resolve(id) {
+async function actOnTicket(id, action) {
+  const res = await fetchAuth(`/tickets/${id}/${action}`, { method: 'POST' });
+  if (res.success) loadSupportDash(); else alert(res.message);
+}
+
+async function assignTech(id) {
+  // Simple assign to self for MVP
+  const res = await fetchAuth(`/tickets/${id}/assign`, {
+    method: 'POST',
+    body: JSON.stringify({ tech_id: currentUser.id })
+  });
+  if (res.success) loadSupportDash(); else alert(res.message);
+}
+
+// ==============================
+// INVENTORY MANAGER LOGIC
+// ==============================
+async function loadManagerDash() {
   try {
-    const res = await fetch(`${API_URL}/tickets/${id}/resolve`, {
-      method: 'POST'
-    });
-    const result = await res.json();
-    if (result.success) {
-      await fetchAll();
-      render();
+    const [invRes, reqRes] = await Promise.all([
+      fetchAuth('/inventory'),
+      fetchAuth('/requests')
+    ]);
+
+    if (invRes.success) {
+      document.getElementById('mgrInventoryTable').innerHTML = invRes.inventory.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td><strong>${i.stock}</strong></td>
+          <td>${i.entering}</td>
+          <td>${i.outgoing}</td>
+          <td>${i.quality}</td>
+          <td><span class="badge ${i.stock <= i.threshold ? 'badge-low' : 'badge-ok'}">${i.stock <= i.threshold ? 'Low Stock' : 'Healthy'}</span></td>
+        </tr>
+      `).join('');
     }
-  } catch (err) {
-    console.error('Resolve failed:', err);
-  }
+
+    if (reqRes.success) {
+      const pending = reqRes.requests.filter(r => r.status === 'Pending');
+      document.getElementById('mgrDemandsTable').innerHTML = pending.length ? pending.map(r => `
+        <tr>
+          <td>${r.employee_name}</td>
+          <td>${r.item_name}</td>
+          <td>${r.quantity}</td>
+          <td>
+            <button class="action-btn btn-success" onclick="actOnRequest(${r.id}, 'validate')">✓</button>
+            <button class="action-btn btn-danger" onclick="actOnRequest(${r.id}, 'refuse')">✕</button>
+          </td>
+        </tr>
+      `).join('') : '<tr><td colspan="4">No pending demands.</td></tr>';
+    }
+  } catch (err) { console.error(err); }
 }
 
-async function delTicket(id) {
-  if (confirm('Delete ticket?')) {
-    try {
-      const res = await fetch(`${API_URL}/tickets/${id}`, {
-        method: 'DELETE'
-      });
-      const result = await res.json();
-      if (result.success) {
-        await fetchAll();
-        render();
-      }
-    } catch (err) {
-      console.error('Delete failed:', err);
-    }
-  }
+async function addNewItem() {
+  const name = document.getElementById('mgrItemName').value;
+  const stock = document.getElementById('mgrItemStock').value;
+  if (!name) return alert('Name required');
+
+  const res = await fetchAuth('/inventory', {
+    method: 'POST',
+    body: JSON.stringify({ name, stock, entering: stock, threshold: 5, quality: 'Good' })
+  });
+  if (res.success) {
+    document.getElementById('mgrItemName').value = '';
+    document.getElementById('mgrItemStock').value = '';
+    loadManagerDash();
+  } else alert(res.message);
 }
 
-// === Inventory Actions ===
-async function addItem() {
-  const name = document.getElementById('iName').value;
-  if (!name) return alert('Enter item name');
-  
-  const data = {
-    name: name,
-    stock: parseInt(document.getElementById('iStock').value) || 0,
-    threshold: parseInt(document.getElementById('iThreshold').value) || 5
-  };
-
-  try {
-    const res = await fetch(`${API_URL}/inventory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    const result = await res.json();
-    if (result.success) {
-      document.getElementById('iName').value = '';
-      document.getElementById('iStock').value = '';
-      await fetchAll();
-      render();
-    } else {
-      alert('Error: ' + result.message);
-    }
-  } catch (err) {
-    console.error('Add item failed:', err);
-  }
+async function actOnRequest(id, action) {
+  const res = await fetchAuth(`/requests/${id}/${action}`, { method: 'POST' });
+  if (res.success) loadManagerDash(); else alert(res.message);
 }
 
-async function updateStock(id, change, currentStock) {
-  const newStock = Math.max(0, currentStock + change);
-  try {
-    const res = await fetch(`${API_URL}/inventory/${id}/stock`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stock: newStock })
-    });
-    const result = await res.json();
-    if (result.success) {
-      await fetchAll();
-      render();
-    }
-  } catch (err) {
-    console.error('Update stock failed:', err);
-  }
-}
-
-async function delItem(id) {
-  if (confirm('Delete item?')) {
-    try {
-      const res = await fetch(`${API_URL}/inventory/${id}`, {
-        method: 'DELETE'
-      });
-      const result = await res.json();
-      if (result.success) {
-        await fetchAll();
-        render();
-      }
-    } catch (err) {
-      console.error('Delete failed:', err);
-    }
-  }
-}
-
-// Start
+// Boot up
 init();

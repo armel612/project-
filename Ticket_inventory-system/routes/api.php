@@ -1,7 +1,7 @@
 <?php
 // routes/api.php
 
-require_once __DIR__ . '/../controllers/AuthController.php';
+require_once __DIR__ . '/../controllers/authControllers.php';
 require_once __DIR__ . '/../controllers/TicketController.php';
 require_once __DIR__ . '/../controllers/InventoryController.php';
 require_once __DIR__ . '/../controllers/RequestController.php';

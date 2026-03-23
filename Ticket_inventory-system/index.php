@@ -25,5 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/routes/api.php';
 
 // Handle request
-$api = new API();
-$api->handleRequest();
+try {
+    $api = new API();
+    $api->handleRequest();
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Backend Error: ' . $e->getMessage()]);
+}
