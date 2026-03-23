@@ -16,6 +16,12 @@ class User {
         return $stmt->fetch();
     }
 
+    public function findByNameAndEmail($name, $email) {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = :email AND name = :name");
+        $stmt->execute(['email' => $email, 'name' => $name]);
+        return $stmt->fetch();
+    }
+
     public function findById($id) {
         $stmt = $this->db->prepare("SELECT id, name, email, role, is_verified, is_active, created_at FROM {$this->table} WHERE id = :id");
         $stmt->execute(['id' => $id]);

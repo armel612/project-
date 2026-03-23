@@ -3,104 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ticket & Inventory System</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Enterprise Ticket & Inventory System</title>
+  <link rel="stylesheet" href="inx.css">
 </head>
 <body>
 
-  <header>
-    <h1>🎫 Ticket & Inventory System</h1>
-    <span>👤 Admin</span>
-  </header>
-
-  <nav>
-    <button class="active" onclick="show('dashboard')">📊 Dashboard</button>
-    <button onclick="show('tickets')">🎫 Tickets</button>
-    <button onclick="show('inventory')">📦 Inventory</button>
-  </nav>
-
-  <main>
-    <!-- Dashboard -->
-    <section id="dashboard" class="section active">
-      <div class="stats">
-        <div class="card">
-          <h3>Open Tickets</h3>
-          <p id="dashOpen">0</p>
-        </div>
-        <div class="card">
-          <h3>Inventory Items</h3>
-          <p id="dashItems">0</p>
-        </div>
-        <div class="card">
-          <h3>Low Stock</h3>
-          <p id="dashLow" class="text-warning">0</p>
-        </div>
-        <div class="card">
-          <h3>Resolved</h3>
-          <p id="dashResolved" class="text-success">0</p>
-        </div>
+  <!-- Login Section -->
+  <div id="loginSection" class="auth-container">
+    <div class="login-box">
+      <h2>👋 Enterprise Portal</h2>
+      <p>Please login to access your dashboard</p>
+      <div class="form-row">
+        <input type="text" id="loginName" placeholder="Full Name (e.g., Alice Employee)">
       </div>
-    </section>
-
-    <!-- Tickets -->
-    <section id="tickets" class="section">
-      <div class="form-box">
-        <h3>Create Ticket</h3>
-        <br>
-        <div class="form-row">
-          <input type="text" id="tTitle" placeholder="Title">
-          <select id="tPriority">
-            <option>Low</option>
-            <option>Medium</option>
-            <option>High</option>
-          </select>
-        </div>
-        <textarea id="tDesc" placeholder="Description" rows="3"></textarea>
-        <br><br>
-        <button class="btn" onclick="addTicket()">Submit</button>
+      <div class="form-row">
+        <input type="email" id="loginEmail" placeholder="Enterprise Email">
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="ticketTable"></tbody>
-      </table>
-    </section>
+      <button class="btn btn-primary w-100" onclick="login()">Login</button>
+      <p id="loginError" class="text-warning text-center mt-10"></p>
+    </div>
+  </div>
 
-    <!-- Inventory -->
-    <section id="inventory" class="section">
-      <div class="form-box">
-        <h3>Add Item</h3>
-        <br>
-        <div class="form-row">
-          <input type="text" id="iName" placeholder="Item Name">
-          <input type="number" id="iStock" placeholder="Stock">
-        </div>
-        <div class="form-row">
-          <input type="number" id="iThreshold" placeholder="Min Threshold" value="5">
-          <button class="btn" onclick="addItem()">Add Item</button>
-        </div>
+  <!-- Main App Section -->
+  <div id="appSection" style="display: none;">
+    <header>
+      <h1>🎫 Enterprise Portal</h1>
+      <div class="user-info">
+        <span id="userNameDisplay">👤 User</span>
+        <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Stock</th>
-            <th>Threshold</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="invTable"></tbody>
-      </table>
-    </section>
-  </main>
+    </header>
+
+    <nav id="mainNav">
+      <!-- Nav items populated by JS based on role -->
+    </nav>
+
+    <main id="mainContent">
+      <!-- EMPLOYEE VIEW -->
+      <section id="employeeView" class="section">
+        <div class="dashboard-grid">
+          <div class="form-box">
+            <h3>Submit Support Ticket</h3>
+            <input type="text" id="empTicketTitle" placeholder="Issue Title">
+            <textarea id="empTicketDesc" placeholder="Description of the problem..."></textarea>
+            <select id="empTicketPriority">
+              <option value="Low">Low Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="High">High Priority</option>
+            </select>
+            <button class="btn btn-primary mt-10" onclick="submitTicket()">Submit Ticket</button>
+          </div>
+          <div class="form-box">
+            <h3>Request Inventory Item</h3>
+            <select id="empItemSelect">
+              <!-- populated by JS -->
+            </select>
+            <input type="number" id="empItemQty" placeholder="Quantity" value="1" min="1">
+            <button class="btn btn-primary mt-10" onclick="requestItem()">Request Item</button>
+          </div>
+        </div>
+        
+        <h3 class="mt-20">My Tickets</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Technician</th></tr></thead>
+          <tbody id="empTicketsTable"></tbody>
+        </table>
+
+        <h3 class="mt-20">My Item Requests</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Item</th><th>Qty</th><th>Status</th></tr></thead>
+          <tbody id="empRequestsTable"></tbody>
+        </table>
+      </section>
+
+      <!-- SUPPORT AGENT VIEW -->
+      <section id="supportView" class="section">
+        <h3>Support Tickets Management</h3>
+        <p>Review and assign incoming technical issues.</p>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Requester</th><th>Title</th><th>Priority</th><th>Status</th><th>Tech Assigned</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="supportTicketsTable"></tbody>
+        </table>
+      </section>
+
+      <!-- INVENTORY MANAGER VIEW -->
+      <section id="managerView" class="section">
+        <div class="dashboard-grid">
+          <div class="form-box">
+            <h3>Add New Inventory Type</h3>
+            <input type="text" id="mgrItemName" placeholder="Item Name">
+            <input type="number" id="mgrItemStock" placeholder="Initial Stock">
+            <button class="btn btn-primary mt-10" onclick="addNewItem()">Add Item</button>
+          </div>
+          <div>
+            <h3>Pending Item Demands</h3>
+            <table>
+              <thead><tr><th>Employee</th><th>Item</th><th>Qty</th><th>Actions</th></tr></thead>
+              <tbody id="mgrDemandsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h3 class="mt-20">Warehouse Inventory</h3>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Current Stock</th><th>Entered HQ</th><th>Dispatched out</th><th>Quality</th><th>Status</th></tr>
+          </thead>
+          <tbody id="mgrInventoryTable"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>
