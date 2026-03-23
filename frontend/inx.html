@@ -3,118 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enterprise Ticket & Inventory System</title>
+  <title>TICKETING/INVENTORY SYSTEM</title>
   <link rel="stylesheet" href="inx.css">
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
-  <!-- Login Section -->
-  <div id="loginSection" class="auth-container">
-    <div class="login-box">
-      <h2>👋 Enterprise Portal</h2>
-      <p>Please login to access your dashboard</p>
-      <div class="form-row">
-        <input type="text" id="loginName" placeholder="Full Name (e.g., Alice Employee)">
-      </div>
-      <div class="form-row">
-        <input type="email" id="loginEmail" placeholder="Enterprise Email">
-      </div>
-      <button class="btn btn-primary w-100" onclick="login()">Login</button>
-      <p id="loginError" class="text-warning text-center mt-10"></p>
-    </div>
+  <!-- Cinematic Background -->
+  <div class="aurora-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
   </div>
-
-  <!-- Main App Section -->
-  <div id="appSection" style="display: none;">
-    <header>
-      <h1>🎫 Enterprise Portal</h1>
-      <div class="user-info">
-        <span id="userNameDisplay">👤 User</span>
-        <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+  <div class="bg-blur"></div>
+  
+  <!-- Section 1: Landing Page -->
+  <section id="landingView" class="section active">
+    <header class="hero-section">
+      <div class="badge-premium mb-20" style="display:inline-block; background:rgba(255,255,255,0.05); padding:8px 16px; border-radius:30px; border:1px solid var(--glass-border); font-size:0.8rem; letter-spacing:1px; color:var(--primary);">
+        <i class="fa-solid fa-sparkles"></i> POWERED BY NEXUS ENGINE v4.0
+      </div>
+      <h1 class="glow-text">TICKETING/INVENTORY SYSTEM</h1>
+      <p class="subtitle">Designed & Developed by DIEUBOUEN DEUTOU DUCLAIR ARMEL</p>
+      <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="navigateToLogin()">Get Started <i class="fa-solid fa-arrow-right"></i></button>
+        <button class="btn btn-outline" onclick="scrollToFeatures()">Explore Features</button>
       </div>
     </header>
 
-    <nav id="mainNav">
-      <!-- Nav items populated by JS based on role -->
-    </nav>
+    <div class="stats-section">
+      <div class="stat-item">
+        <i class="fa-solid fa-microchip"></i>
+        <h4>1,200+</h4>
+        <p>Assets Tracked</p>
+      </div>
+      <div class="stat-item">
+        <i class="fa-solid fa-bolt-lightning"></i>
+        <h4>0.4s</h4>
+        <p>Response Time</p>
+      </div>
+      <div class="stat-item">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h4>99.9%</h4>
+        <p>Security Uptime</p>
+      </div>
+    </div>
 
-    <main id="mainContent">
-      <!-- EMPLOYEE VIEW -->
-      <section id="employeeView" class="section">
-        <div class="dashboard-grid">
-          <div class="form-box">
-            <h3>Submit Support Ticket</h3>
-            <input type="text" id="empTicketTitle" placeholder="Issue Title">
-            <textarea id="empTicketDesc" placeholder="Description of the problem..."></textarea>
-            <select id="empTicketPriority">
-              <option value="Low">Low Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="High">High Priority</option>
-            </select>
-            <button class="btn btn-primary mt-10" onclick="submitTicket()">Submit Ticket</button>
-          </div>
-          <div class="form-box">
-            <h3>Request Inventory Item</h3>
-            <select id="empItemSelect">
-              <!-- populated by JS -->
-            </select>
-            <input type="number" id="empItemQty" placeholder="Quantity" value="1" min="1">
-            <button class="btn btn-primary mt-10" onclick="requestItem()">Request Item</button>
-          </div>
+    <div class="features-grid" id="features">
+      <div class="glass-card">
+        <i class="fa-solid fa-ticket-alt" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+        <h3>Smart Ticketing</h3>
+        <p>Dynamic assignment logic and real-time progress logging for support teams.</p>
+      </div>
+      <div class="glass-card">
+        <i class="fa-solid fa-boxes-stacked" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+        <h3>Warehouse Hub</h3>
+        <p>Auto-threshold stock alerts and seamless multi-department request handling.</p>
+      </div>
+      <div class="glass-card">
+        <i class="fa-solid fa-user-shield" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+        <h3>Enterprise RBAC</h3>
+        <p>Granular privilege delegation and comprehensive system activity auditing.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Login Interface -->
+  <section id="loginSection" class="section">
+    <div class="glass-panel login-panel">
+      <div class="text-center mb-30">
+        <div style="background:var(--primary); width:64px; height:64px; border-radius:18px; display:grid; place-items:center; color:#000; font-size:1.8rem; margin:0 auto 1.5rem auto; box-shadow:0 0 30px rgba(0,210,255,0.4);">
+          <i class="fa-solid fa-shield-check"></i>
         </div>
-        
-        <h3 class="mt-20">My Tickets</h3>
-        <table>
-          <thead><tr><th>ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Technician</th></tr></thead>
-          <tbody id="empTicketsTable"></tbody>
-        </table>
+        <h2 style="font-size:2rem;">Authorized Entry</h2>
+        <p class="desc">Please verify your credentials to access Eneo</p>
+      </div>
+      
+      <div style="display:flex; flex-direction:column; gap:15px;">
+        <input type="email" id="email" class="premium-input" placeholder="Corporate Email">
+        <input type="password" id="password" class="premium-input" placeholder="Security Token">
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="login()">Enter Nexus Terminal <i class="fa-solid fa-right-to-bracket"></i></button>
+        <button class="btn btn-outline" style="width:100%; justify-content:center;" onclick="showLanding()">← Return to Home</button>
+      </div>
+    </div>
+  </section>
 
-        <h3 class="mt-20">My Item Requests</h3>
-        <table>
-          <thead><tr><th>ID</th><th>Item</th><th>Qty</th><th>Status</th></tr></thead>
-          <tbody id="empRequestsTable"></tbody>
-        </table>
-      </section>
-
-      <!-- SUPPORT AGENT VIEW -->
-      <section id="supportView" class="section">
-        <h3>Support Tickets Management</h3>
-        <p>Review and assign incoming technical issues.</p>
-        <table>
-          <thead>
-            <tr><th>ID</th><th>Requester</th><th>Title</th><th>Priority</th><th>Status</th><th>Tech Assigned</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="supportTicketsTable"></tbody>
-        </table>
-      </section>
-
-      <!-- INVENTORY MANAGER VIEW -->
-      <section id="managerView" class="section">
-        <div class="dashboard-grid">
-          <div class="form-box">
-            <h3>Add New Inventory Type</h3>
-            <input type="text" id="mgrItemName" placeholder="Item Name">
-            <input type="number" id="mgrItemStock" placeholder="Initial Stock">
-            <button class="btn btn-primary mt-10" onclick="addNewItem()">Add Item</button>
-          </div>
-          <div>
-            <h3>Pending Item Demands</h3>
-            <table>
-              <thead><tr><th>Employee</th><th>Item</th><th>Qty</th><th>Actions</th></tr></thead>
-              <tbody id="mgrDemandsTable"></tbody>
-            </table>
-          </div>
+  <!-- Section 3: Main Dashboard -->
+  <div id="appSection" style="display:none;" class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-area">
+          <div class="logo-box">T</div>
+          <span style="font-weight:800; letter-spacing:2px; font-size:1.2rem;">TICKETING/INVENTORY</span>
         </div>
+      </div>
+      
+      <div class="role-info" style="margin-bottom:2rem; padding:1.5rem; background:rgba(255,255,255,0.03); border-radius:16px; border:1px solid var(--glass-border);">
+        <p class="desc" style="margin-bottom:5px; font-size:0.7rem; text-transform:uppercase;">Nexus Identity</p>
+        <h4 id="welcomeMsg" style="margin-bottom:10px;">User Name</h4>
+        <div id="roleBadge" class="badge" style="background:rgba(0,210,255,0.1); color:var(--primary); display:inline-block;">Role</div>
+      </div>
 
-        <h3 class="mt-20">Warehouse Inventory</h3>
-        <table>
-          <thead>
-            <tr><th>Item</th><th>Current Stock</th><th>Entered HQ</th><th>Dispatched out</th><th>Quality</th><th>Status</th></tr>
-          </thead>
-          <tbody id="mgrInventoryTable"></tbody>
-        </table>
-      </section>
+      <nav id="nav-links" class="nav-links"></nav>
+
+      <div style="margin-top:auto;">
+        <p class="desc text-center" style="font-size:0.6rem; opacity:0.5; margin-bottom:10px;">© 2026 DIEUBOUEN DEUTOU DUCLAIR ARMEL</p>
+        <button class="btn btn-outline" style="width:100%; border-color:rgba(239,68,68,0.2); color:#fca5a5;" onclick="logout()">
+          <i class="fa-solid fa-power-off"></i> <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="content-area">
+      <!-- High-level Stats or Notifications could go here -->
+      <section id="employeeView" class="section"></section>
+      <section id="supportAgentView" class="section"></section>
+      <section id="managerView" class="section"></section>
+      <section id="technicianView" class="section"></section>
+      <section id="systemAdminView" class="section"></section>
+      <section id="inventoryView" class="section"></section>
+      <section id="requestView" class="section"></section>
     </main>
+  </div>
+
+  <!-- Shared Progress Modal -->
+  <div id="progressModal" class="modal-overlay" style="display:none;">
+    <div class="glass-panel" style="width:95%; max-width:650px; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h3 id="modalTicketTitle">Ticket Progress</h3>
+        <button onclick="closeProgressModal()" class="btn btn-outline" style="padding:5px 10px;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div id="progressLog" style="background:rgba(0,0,0,0.2); border-radius:16px; padding:1.5rem; margin-bottom:1.5rem; max-height:300px; overflow-y:auto; border:1px solid var(--glass-border);">
+        <!-- Updates injected here -->
+      </div>
+
+      <div id="progressInputArea">
+        <h4 style="margin-bottom:10px;">Post Update</h4>
+        <textarea id="progressText" class="premium-input" style="height:100px; resize:none;" placeholder="Log your progress notes..."></textarea>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <select id="progressStatus" class="premium-input" style="flex:1;">
+            <option value="">-- Update Status (Optional) --</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Closed">Closed</option>
+          </select>
+          <button id="sendProgressBtn" class="btn btn-primary">Update <i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
